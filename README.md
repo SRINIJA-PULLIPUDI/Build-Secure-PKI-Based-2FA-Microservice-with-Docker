@@ -10,7 +10,7 @@ echo "Commit Hash:"
 cat commit_hash.txt
 echo ""
 
-#  Sign the commit hash with RSA-PSS-SHA256
+##  Sign the commit hash with RSA-PSS-SHA256
 echo "[2] Signing commit hash with student_private.pem..."
 openssl dgst -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:32 -sign student_private.pem -out signature.bin commit_hash.txt
 echo "signature.bin created"
@@ -33,7 +33,7 @@ openssl pkeyutl -encrypt \
 echo "enc_sig.bin created"
 echo ""
 
-# Convert encrypted signature to Base64 single-line
+## Convert encrypted signature to Base64 single-line
 echo "[4] Creating Base64 encrypted signature (enc_sig.b64)..."
 base64 < enc_sig.bin | tr -d '\n' > enc_sig.b64
 echo "Encrypted Commit Signature:"
