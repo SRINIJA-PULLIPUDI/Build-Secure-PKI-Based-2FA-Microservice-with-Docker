@@ -4,11 +4,7 @@ repo_url=https://github.com/SRINIJA-PULLIPUDI/Build-Secure-PKI-Based-2FA-Microse
 
 
 # 2. Commit Hash 
-echo "[1] Extracting commit hash..."
-git log -1 --format=%H > commit_hash.txt
-echo "Commit Hash:"
-cat commit_hash.txt
-echo ""
+Commit_Hash= 6dcab2f674c13a7fcd553aecadb84feae4b04da5
 
 ##  Sign the commit hash with RSA-PSS-SHA256
 echo "[2] Signing commit hash with student_private.pem..."
