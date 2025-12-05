@@ -1,16 +1,16 @@
 #!/bin/bash
-# 1. GitHub Repository URL
+- 1. GitHub Repository URL
 repo_url=https://github.com/SRINIJA-PULLIPUDI/Build-Secure-PKI-Based-2FA-Microservice-with-Docker
 
 
-# 2. Commit Hash 
+- 2. Commit Hash 
 echo "[1] Extracting commit hash..."
 git log -1 --format=%H > commit_hash.txt
 echo "Commit Hash:"
 cat commit_hash.txt
 echo ""
 
-#  Sign the commit hash with RSA-PSS-SHA256
+--  Sign the commit hash with RSA-PSS-SHA256
 echo "[2] Signing commit hash with student_private.pem..."
 openssl dgst -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:32 -sign student_private.pem -out signature.bin commit_hash.txt
 echo "signature.bin created"
@@ -20,7 +20,7 @@ echo ""
 echo "signature.bin created"
 echo ""
 
-# 3. Encrypted Commit Signature
+- 3. Encrypted Commit Signature
 echo "[3] Encrypting signature with instructor_public.pem..."
 openssl pkeyutl -encrypt \
   -pubin -inkey instructor_public.pem \
@@ -33,7 +33,7 @@ openssl pkeyutl -encrypt \
 echo "enc_sig.bin created"
 echo ""
 
-# Convert encrypted signature to Base64 single-line
+-- Convert encrypted signature to Base64 single-line
 echo "[4] Creating Base64 encrypted signature (enc_sig.b64)..."
 base64 < enc_sig.bin | tr -d '\n' > enc_sig.b64
 echo "Encrypted Commit Signature:"
@@ -41,7 +41,7 @@ cat enc_sig.b64
 echo ""
 echo ""
 
-# 4. Student Public Key in API format (one line with \n)
+- 4. Student Public Key in API format (one line with \n)
 echo "[5] Converting student_public.pem to single line..."
 awk '{printf "%s\\n",$0}' student_public.pem > student_public_api.txt
 
@@ -50,7 +50,7 @@ cat student_public_api.txt
 echo ""
 echo ""
 
-# 5. Encrypted Seed to one line
+- 5. Encrypted Seed to one line
 echo "[6] Converting encrypted_seed.txt to single line..."
 tr -d '\n' < encrypted_seed.txt > encrypted_seed_oneline.txt
 
@@ -59,6 +59,6 @@ cat encrypted_seed_oneline.txt
 echo ""
 echo ""
 
-# 6. Docker Image URL
+- 6. Docker Image URL
 echo "Docker image URL for evaluation: srinijapullipudi/build-secure-pki-based-2fa-microservice-with-docker-app:latest"
 echo "Docker Hub link: https://hub.docker.com/r/srinijapullipudi/build-secure-pki-based-2fa-microservice-with-docker-app"
