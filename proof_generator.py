@@ -1,64 +1,36 @@
 #!/usr/bin/env python3
-import base64
-import subprocess
-import sys
 
+import base64
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.backends import default_backend
 
 
-# ---- Paths to key files ----
-STUDENT_PRIVATE_KEY_PATH = "student_private.pem"
-INSTRUCTOR_PUBLIC_KEY_PATH = "instructor_public.pem"
-
-
-# 1. Get current commit hash (40-character hex)
-def get_current_commit_hash() -> str:
-    """
-    Run: git log -1 --format=%H
-    Returns the latest commit hash as a string.
-    """
-    try:
-        output = subprocess.check_output(
-            ["git", "log", "-1", "--format=%H"],
-            stderr=subprocess.DEVNULL,
-        )
-        commit_hash = output.decode("utf-8").strip()
-        if len(commit_hash) != 40:
-            raise ValueError("Unexpected commit hash length")
-        return commit_hash
-    except Exception as e:
-        print(f"Error getting git commit hash: {e}", file=sys.stderr)
-        sys.exit(1)
-
-
-# 2. Load keys
+# Helper: Load private key
 def load_private_key(path: str):
     with open(path, "rb") as f:
-        return serialization.load_pem_private_key(f.read(), password=None)
+        return serialization.load_pem_private_key(
+            f.read(),
+            password=None,
+            backend=default_backend()
+        )
 
 
+# Helper: Load public key
 def load_public_key(path: str):
     with open(path, "rb") as f:
-        return serialization.load_pem_public_key(f.read())
+        return serialization.load_pem_public_key(
+            f.read(),
+            backend=default_backend()
+        )
 
 
-# 3. Sign message with RSA-PSS-SHA256
+# Function 1: Sign message using RSA-PSS-SHA256
 def sign_message(message: str, private_key) -> bytes:
     """
-    Sign a message using RSA-PSS with SHA-256.
-
-    Implementation:
-    1. Encode commit hash as ASCII/UTF-8 bytes
-       (CRITICAL: sign the ASCII string, NOT binary hex)
-    2. Sign using RSA-PSS with:
-        - Padding: PSS
-        - MGF: MGF1 with SHA-256
-        - Hash Algorithm: SHA-256
-        - Salt Length: Maximum
-    3. Return signature bytes
+    Sign commit hash string (ASCII) using RSA-PSS-SHA256.
     """
-    message_bytes = message.encode("utf-8")
+    message_bytes = message.encode("utf-8") 
 
     signature = private_key.sign(
         message_bytes,
@@ -66,58 +38,54 @@ def sign_message(message: str, private_key) -> bytes:
             mgf=padding.MGF1(hashes.SHA256()),
             salt_length=padding.PSS.MAX_LENGTH,
         ),
-        hashes.SHA256(),
+        hashes.SHA256()
     )
+
     return signature
 
 
-# 4. Encrypt signature with RSA-OAEP-SHA256
+# Function 2: Encrypt signature using RSA-OAEP-SHA256
 def encrypt_with_public_key(data: bytes, public_key) -> bytes:
     """
-    Encrypt data using RSA/OAEP with SHA-256.
-
-    Implementation:
-    1. Encrypt signature bytes using RSA/OAEP with:
-        - Padding: OAEP
-        - MGF: MGF1 with SHA-256
-        - Hash Algorithm: SHA-256
-        - Label: None
-    2. Return encrypted ciphertext bytes
+    Encrypt signature bytes using RSA-OAEP-SHA256.
     """
-    ciphertext = public_key.encrypt(
+    encrypted = public_key.encrypt(
         data,
         padding.OAEP(
             mgf=padding.MGF1(algorithm=hashes.SHA256()),
             algorithm=hashes.SHA256(),
-            label=None,
-        ),
+            label=None
+        )
     )
-    return ciphertext
+    return encrypted
 
 
-# 5. Full proof generation
+# MAIN SCRIPT
 def main():
-    # 1. Get commit hash
-    commit_hash = get_current_commit_hash()
+
+    # 1. Replace with your real commit hash
+    commit_hash = "6dcab2f674c13a7fcd553aecadb84feae4b04da5"  
 
     # 2. Load student private key
-    student_private_key = load_private_key(STUDENT_PRIVATE_KEY_PATH)
+    student_private = load_private_key("student_private.pem")
 
-    # 3. Sign commit hash with student private key (RSA-PSS-SHA256)
-    signature = sign_message(commit_hash, student_private_key)
+    # 3. Sign commit hash
+    signature = sign_message(commit_hash, student_private)
 
     # 4. Load instructor public key
-    instructor_public_key = load_public_key(INSTRUCTOR_PUBLIC_KEY_PATH)
+    instructor_public = load_public_key("instructor_public.pem")
 
-    # 5. Encrypt signature with instructor public key (RSA-OAEP-SHA256)
-    encrypted_signature = encrypt_with_public_key(signature, instructor_public_key)
+    # 5. Encrypt the signature
+    encrypted_signature = encrypt_with_public_key(signature, instructor_public)
 
-    # 6. Base64-encode encrypted signature
-    encrypted_signature_b64 = base64.b64encode(encrypted_signature).decode("ascii")
+    # 6. Base64 encode
+    encrypted_b64 = base64.b64encode(encrypted_signature).decode()
 
-    # Output for submission
-    print("Commit Hash:", commit_hash)
-    print("Encrypted Signature:", encrypted_signature_b64)
+    print("\n==============================")
+    print(" Commit Proof Generated")
+    print("==============================")
+    print(f"Commit Hash: {commit_hash}")
+    print(f"Encrypted Signature: {encrypted_b64}\n")
 
 
 if __name__ == "__main__":
